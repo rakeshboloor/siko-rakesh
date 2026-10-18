@@ -1,0 +1,26 @@
+{
+  "name": "SIKO Eduventures — Personalised 1:1 & Smart Circle Learning + AI Assessment Portal",
+  "short_name": "SIKO Eduventures",
+  "description": "SIKO Eduventures: Personalised 1-on-1 Subject Specialist Mentorship, Pre-Decided 1:Many Smart Batches, Success Assured Plan, and Connected AI Question Paper Generator & Checker Portal.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0F172A",
+  "theme_color": "#1E3A8A",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%231E3A8A'/%3E%3Ctext x='96' y='118' font-family='Plus Jakarta Sans,Inter,sans-serif' font-size='64' font-weight='900' fill='%23FFFFFF' text-anchor='middle'%3ESIKO%3C/text%3E%3Ccircle cx='152' cy='44' r='14' fill='%2310B981'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%231E3A8A'/%3E%3Ctext x='256' y='310' font-family='Plus Jakarta Sans,Inter,sans-serif' font-size='168' font-weight='900' fill='%23FFFFFF' text-anchor='middle'%3ESIKO%3C/text%3E%3Ccircle cx='406' cy='116' r='36' fill='%2310B981'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

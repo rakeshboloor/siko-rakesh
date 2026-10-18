@@ -1,0 +1,193 @@
+/* ==========================================================================
+   SIKO DESIGN SYSTEM - DESIGN TOKENS
+   Version A: Clean White Educational Platform (Coursera / Khan Academy Feel)
+   Vibe: Bright, airy, calm, academic, trustworthy, intelligent, focused
+   ========================================================================== */
+
+:root {
+  /* Brand Color Tokens (Version A: Periwinkle Primary #4361EE) */
+  --siko-blue-900: #1A286B;
+  --siko-blue-800: #253682;
+  --siko-blue-700: #3451D1; /* Primary Dark / Hover */
+  --siko-blue-600: #4361EE; /* Bright Periwinkle Blue CTA & Active */
+  --siko-blue-500: #5A75F2;
+  --siko-blue-400: #7E94F5;
+  --siko-blue-100: #EEF1FD; /* Primary Soft Tint */
+  --siko-blue-50:  #F5F7FE;
+
+  /* Secondary Brand Accents - AI / Smart Features (Purple #7C3AED) */
+  --siko-purple-700: #5B21B6;
+  --siko-purple-600: #7C3AED; /* AI Accent Purple */
+  --siko-purple-500: #8B5CF6;
+  --siko-purple-100: #F5F0FF;
+  --siko-purple-50:  #FAF5FF;
+
+  /* Warm Accents - Guidance & Caution (Amber) */
+  --siko-amber-700: #B45309;
+  --siko-amber-600: #D97706; /* Secondary Warm Amber */
+  --siko-amber-500: #F59E0B;
+  --siko-amber-400: #FBBF24;
+  --siko-amber-100: #FEF3C7;
+  --siko-amber-50:  #FFFBEB;
+
+  /* Academic Growth & Mastery (Emerald) */
+  --siko-teal-700: #047857;
+  --siko-teal-600: #059669; /* Emerald Success */
+  --siko-teal-500: #10B981;
+  --siko-teal-100: #D1FAE5;
+  --siko-teal-50:  #ECFDF5;
+
+  /* Semantic Feedback */
+  --color-success: #059669;
+  --color-success-bg: #ECFDF5;
+  --color-success-border: #A7F3D0;
+  
+  --color-warning: #D97706;
+  --color-warning-bg: #FFFBEB;
+  --color-warning-border: #FDE68A;
+
+  --color-danger: #DC2626;
+  --color-danger-bg: #FEF2F2;
+  --color-danger-border: #FECACA;
+
+  --color-info: #4361EE;
+  --color-info-bg: #EEF1FD;
+  --color-info-border: #C7D2FE;
+
+  /* Neutrals & Surfaces (Clean Light Theme) */
+  --color-bg-app: #FAFBFF;
+  --color-surface-card: #FFFFFF;
+  --color-surface-subtle: #F3F4F6;
+  --color-surface-elevated: #FFFFFF;
+  
+  --color-border: #E5E7EB;
+  --color-border-card: #E8EDF5;
+  --color-border-strong: #D1D5DB;
+  --color-border-subtle: #F3F4F6;
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6B7280;
+  --color-text-subtle: #9CA3AF;
+  --color-text-on-dark: #FFFFFF;
+  --color-text-on-primary: #FFFFFF;
+
+  /* Convenience Theme Aliases */
+  --siko-primary: #4361EE;
+  --siko-primary-dark: #3451D1;
+  --siko-primary-bg: #EEF1FD;
+  --siko-secondary: #7C3AED;
+  --siko-secondary-bg: #F5F0FF;
+  --siko-success: #059669;
+  --siko-success-bg: #ECFDF5;
+  --radius-card: 14px;
+  --shadow-card: 0 1px 4px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-card-hover: 0 6px 16px rgba(15, 23, 42, 0.08);
+
+  /* Classroom Environment Tokens */
+  --classroom-bg: #0B1120;
+  --classroom-surface: #111827;
+  --classroom-surface-subtle: #1E293B;
+  --classroom-surface-elevated: #1F2937;
+  --classroom-border: #334155;
+  --classroom-border-subtle: #1E293B;
+  --classroom-text: #F8FAFC;
+  --classroom-text-muted: #94A3B8;
+  --classroom-accent: #4361EE;
+
+  /* Teacher Tier Tokens */
+  --tier-master-bg: #FEF3C7;
+  --tier-master-color: #92400E;
+  --tier-master-border: #FCD34D;
+  --tier-master-badge: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+
+  --tier-expert-bg: #EEF1FD;
+  --tier-expert-color: #3451D1;
+  --tier-expert-border: #C7D2FE;
+  --tier-expert-badge: linear-gradient(135deg, #4361EE 0%, #3451D1 100%);
+
+  --tier-senior-bg: #ECFDF5;
+  --tier-senior-color: #047857;
+  --tier-senior-border: #A7F3D0;
+  --tier-senior-badge: linear-gradient(135deg, #10B981 0%, #059669 100%);
+
+  --tier-pro-bg: #F5F0FF;
+  --tier-pro-color: #5B21B6;
+  --tier-pro-border: #DDD6FE;
+  --tier-pro-badge: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+
+  /* Typography */
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-xs: 0.78rem;    /* ~12.5px */
+  --text-sm: 0.9rem;     /* ~14.4px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+  --text-4xl: 2.25rem;   /* 36px */
+  --text-5xl: 2.85rem;   /* 45.6px */
+  --text-6xl: 3.5rem;    /* 56px */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.4;
+  --line-height-normal: 1.55;
+  --line-height-relaxed: 1.68;
+
+  /* Spacing Scale */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+  --space-16: 4rem;    /* 64px */
+  --space-20: 5rem;    /* 80px */
+
+  /* Border Radii */
+  --radius-xs: 6px;
+  --radius-sm: 8px;    /* Button radius: 8px */
+  --radius-md: 12px;
+  --radius-lg: 14px;   /* Card radius: 14px */
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Natural Clean Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 4px 0 rgba(15, 23, 42, 0.06), 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 24px -3px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+  --shadow-xl: 0 18px 36px -6px rgba(15, 23, 42, 0.10), 0 6px 14px -3px rgba(15, 23, 42, 0.04);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Layout Breakpoints & Containers */
+  --container-max-w: 1280px;
+  --container-narrow: 1024px;
+  --sidebar-w: 260px;
+  --topbar-h: 68px;
+  --bottom-nav-h: 64px;
+
+  /* Z-indices */
+  --z-base: 1;
+  --z-sticky: 100;
+  --z-drawer: 500;
+  --z-modal: 1000;
+  --z-toast: 1500;
+  --z-tooltip: 2000;
+}

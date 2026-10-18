@@ -1,0 +1,990 @@
+"""
+models.py
+---------
+All SQLAlchemy ORM models for the SIKO platform.
+
+Relationships and foreign keys are fully declared so that
+`Base.metadata.create_all()` produces a correct schema with
+proper indexes and constraints.
+"""
+
+import uuid
+from datetime import datetime
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import relationship
+from sqlalchemy.types import JSON
+
+from database import Base
+
+
+# ---------------------------------------------------------------------------
+# Helper
+# ---------------------------------------------------------------------------
+
+
+def _uuid() -> str:
+    """Generate a URL-safe UUID4 string."""
+    return str(uuid.uuid4())
+
+
+def _now() -> datetime:
+    return datetime.utcnow()
+
+
+# ===========================================================================
+# User & Role Entities
+# ===========================================================================
+
+
+class User(Base):
+    """Platform user account — shared across all roles."""
+
+    __tablename__ = "users"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    role = Column(String(20), nullable=False)          # student / teacher / parent / admin
+    full_name = Column(String(255), nullable=False)
+    phone = Column(String(20), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=_now, nullable=False)
+    updated_at = Column(DateTime, default=_now, onupdate=_now, nullable=False)
+
+    # Relationships
+    student_profile = relationship("Student", back_populates="user", uselist=False)
+    teacher_profile = relationship("Teacher", back_populates="user", uselist=False)
+    parent_profile = relationship("Parent", back_populates="user", uselist=False)
+    notifications = relationship("Notification", back_populates="user")
+    audit_logs = relationship("AuditLog", back_populates="actor", foreign_keys="AuditLog.actor_id")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<User id={self.id} email={self.email} role={self.role}>"
+
+
+class Student(Base):
+    """Extended profile for users with role='student'."""
+
+    __tablename__ = "students"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    grade = Column(String(10), nullable=True)          # e.g. "10", "11"
+    board = Column(String(50), nullable=True)          # e.g. "CBSE"
+    program = Column(String(50), nullable=True)        # e.g. "JEE", "School"
+    learning_dna = Column(JSON, nullable=True)         # personalised learning attributes
+    onboarding_complete = Column(Boolean, default=False, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="student_profile")
+    parent_links = relationship("Parent", back_populates="student")
+    journeys = relationship("LearningJourney", back_populates="student", foreign_keys="LearningJourney.student_id")
+    bookings = relationship("Booking", back_populates="student")
+    attendances = relationship("Attendance", back_populates="student")
+    submissions = relationship("Submission", back_populates="student")
+
+    __table_args__ = (Index("ix_students_user_id", "user_id"),)
+
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Student id={self.id} user_id={self.user_id}>"
+
+
+class Teacher(Base):
+    """Extended profile for users with role='teacher'."""
+
+    __tablename__ = "teachers"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    bio = Column(Text, nullable=True)
+    expertise = Column(JSON, nullable=True)            # list of subjects / topics
+    tier = Column(String(20), default="bronze")        # bronze / silver / gold / platinum
+    rating = Column(Float, default=0.0)
+    application_status = Column(String(50), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="teacher_profile")
+    journeys = relationship("LearningJourney", back_populates="teacher", foreign_keys="LearningJourney.teacher_id")
+    applications = relationship("TeacherApplication", back_populates="teacher")
+    offers = relationship("TeacherOffer", back_populates="teacher")
+    offer_acceptances = relationship("TeacherOfferAcceptance", back_populates="teacher")
+    atcs = relationship("ATC", back_populates="teacher")
+    agreement_acceptances = relationship("AgreementAcceptance", back_populates="teacher")
+    wallet_transactions = relationship("WalletTransaction", back_populates="teacher")
+    escrows = relationship("Escrow", back_populates="teacher")
+    classes = relationship("Class", back_populates="teacher")
+    worksheets = relationship("Worksheet", back_populates="teacher")
+    assessments = relationship("Assessment", back_populates="teacher")
+    ptms = relationship("PTM", back_populates="teacher")
+    bookings = relationship("Booking", back_populates="teacher")
+
+    __table_args__ = (Index("ix_teachers_user_id", "user_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Teacher id={self.id} tier={self.tier}>"
+
+
+class Parent(Base):
+    """Extended profile for users with role='parent'.  Links to a student."""
+
+    __tablename__ = "parents"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    student_id = Column(String(36), ForeignKey("students.id", ondelete="SET NULL"), nullable=True)
+
+    # Relationships
+    user = relationship("User", back_populates="parent_profile")
+    student = relationship("Student", back_populates="parent_links")
+    ptm_sessions = relationship("PTM", back_populates="parent", foreign_keys="PTM.parent_id")
+
+    __table_args__ = (Index("ix_parents_user_id", "user_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Parent id={self.id} user_id={self.user_id}>"
+
+
+# ===========================================================================
+# Curriculum Hierarchy
+# ===========================================================================
+
+
+class Board(Base):
+    """Educational board (CBSE / ICSE / Maharashtra State Board)."""
+
+    __tablename__ = "boards"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(100), unique=True, nullable=False)
+
+    # Relationships
+    grades = relationship("Grade", back_populates="board")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Board name={self.name}>"
+
+
+class Grade(Base):
+    """A grade level (8–12) within a board."""
+
+    __tablename__ = "grades"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    level = Column(Integer, nullable=False)             # 8, 9, 10, 11, 12
+    board_id = Column(String(36), ForeignKey("boards.id", ondelete="CASCADE"), nullable=False)
+
+    # Relationships
+    board = relationship("Board", back_populates="grades")
+    programs = relationship("Program", back_populates="grade")
+
+    __table_args__ = (
+        UniqueConstraint("level", "board_id", name="uq_grade_board"),
+        Index("ix_grades_board_id", "board_id"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Grade level={self.level} board_id={self.board_id}>"
+
+
+class Program(Base):
+    """A learning program (JEE / NEET / School) associated with a grade."""
+
+    __tablename__ = "programs"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(50), nullable=False)           # JEE / NEET / School
+    grade_id = Column(String(36), ForeignKey("grades.id", ondelete="CASCADE"), nullable=False)
+
+    # Relationships
+    grade = relationship("Grade", back_populates="programs")
+    subjects = relationship("Subject", back_populates="program")
+
+    __table_args__ = (
+        UniqueConstraint("name", "grade_id", name="uq_program_grade"),
+        Index("ix_programs_grade_id", "grade_id"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Program name={self.name} grade_id={self.grade_id}>"
+
+
+class Subject(Base):
+    """A subject taught within a program."""
+
+    __tablename__ = "subjects"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(100), nullable=False)
+    program_id = Column(String(36), ForeignKey("programs.id", ondelete="CASCADE"), nullable=False)
+
+    # Relationships
+    program = relationship("Program", back_populates="subjects")
+    chapters = relationship("Chapter", back_populates="subject")
+    journeys = relationship("LearningJourney", back_populates="subject")
+    worksheets = relationship("Worksheet", back_populates="subject")
+    assessments = relationship("Assessment", back_populates="subject")
+
+    __table_args__ = (
+        UniqueConstraint("name", "program_id", name="uq_subject_program"),
+        Index("ix_subjects_program_id", "program_id"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Subject name={self.name}>"
+
+
+class Chapter(Base):
+    """A chapter within a subject, ordered by index."""
+
+    __tablename__ = "chapters"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(255), nullable=False)
+    subject_id = Column(String(36), ForeignKey("subjects.id", ondelete="CASCADE"), nullable=False)
+    order_index = Column(Integer, default=0, nullable=False)
+
+    # Relationships
+    subject = relationship("Subject", back_populates="chapters")
+    concepts = relationship("Concept", back_populates="chapter")
+
+    __table_args__ = (Index("ix_chapters_subject_id", "subject_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Chapter name={self.name} order={self.order_index}>"
+
+
+class Concept(Base):
+    """A granular learning concept within a chapter."""
+
+    __tablename__ = "concepts"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(255), nullable=False)
+    chapter_id = Column(String(36), ForeignKey("chapters.id", ondelete="CASCADE"), nullable=False)
+    description = Column(Text, nullable=True)
+
+    # Relationships
+    chapter = relationship("Chapter", back_populates="concepts")
+
+    __table_args__ = (Index("ix_concepts_chapter_id", "chapter_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Concept name={self.name}>"
+
+
+# ===========================================================================
+# Learning Journey
+# ===========================================================================
+
+
+class LearningJourney(Base):
+    """A student's learning engagement with a teacher for a specific subject."""
+
+    __tablename__ = "learning_journeys"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    student_id = Column(String(36), ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="SET NULL"), nullable=True)
+    subject_id = Column(String(36), ForeignKey("subjects.id", ondelete="SET NULL"), nullable=True)
+    status = Column(String(30), default="active")       # active / paused / completed / cancelled
+    chapters = Column(JSON, nullable=True)              # list of chapter ids / names covered
+    start_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
+
+    # Relationships
+    student = relationship("Student", back_populates="journeys", foreign_keys=[student_id])
+    teacher = relationship("Teacher", back_populates="journeys", foreign_keys=[teacher_id])
+    subject = relationship("Subject", back_populates="journeys")
+    classes = relationship("Class", back_populates="journey")
+    bookings = relationship("Booking", back_populates="journey")
+    worksheets = relationship("Worksheet", back_populates="journey")
+    assessments = relationship("Assessment", back_populates="journey")
+    ptms = relationship("PTM", back_populates="journey")
+
+    __table_args__ = (
+        Index("ix_lj_student_id", "student_id"),
+        Index("ix_lj_teacher_id", "teacher_id"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<LearningJourney id={self.id} status={self.status}>"
+
+
+# ===========================================================================
+# Teacher Onboarding Pipeline
+# ===========================================================================
+
+
+class TeacherApplication(Base):
+    """Tracks a teacher's onboarding application through multiple stages."""
+
+    __tablename__ = "teacher_applications"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False)
+    # applied / screening / demo / interview / offer_pending / offer_accepted /
+    # agreement_pending / signed / orientation / approved / active / suspended / rejected
+    status = Column(String(50), default="applied", nullable=False)
+    created_at = Column(DateTime, default=_now, nullable=False)
+
+    # Relationships
+    teacher = relationship("Teacher", back_populates="applications")
+    offers = relationship("TeacherOffer", back_populates="application")
+
+    __table_args__ = (Index("ix_ta_teacher_id", "teacher_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<TeacherApplication id={self.id} status={self.status}>"
+
+
+class TeacherOffer(Base):
+    """Formal engagement offer extended to a teacher."""
+
+    __tablename__ = "teacher_offers"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False)
+    application_id = Column(String(36), ForeignKey("teacher_applications.id", ondelete="SET NULL"), nullable=True)
+    subject = Column(String(100), nullable=True)
+    board = Column(String(50), nullable=True)
+    grade = Column(String(10), nullable=True)
+    program = Column(String(50), nullable=True)
+    teacher_rate = Column(Float, nullable=True)
+    currency = Column(String(10), default="INR")
+    commission_rate = Column(Float, nullable=True)
+    teacher_allocation = Column(Float, nullable=True)
+    m1_amount = Column(Float, nullable=True)
+    m2_amount = Column(Float, nullable=True)
+    m3_amount = Column(Float, nullable=True)
+    sessions = Column(Integer, nullable=True)
+    session_duration = Column(Integer, nullable=True)  # minutes
+    schedule = Column(JSON, nullable=True)
+    timezone = Column(String(50), default="Asia/Kolkata")
+    start_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
+    status = Column(String(20), default="pending")     # pending / accepted / declined
+    created_at = Column(DateTime, default=_now, nullable=False)
+
+    # Relationships
+    teacher = relationship("Teacher", back_populates="offers")
+    application = relationship("TeacherApplication", back_populates="offers")
+    acceptances = relationship("TeacherOfferAcceptance", back_populates="offer")
+    atcs = relationship("ATC", back_populates="offer")
+    agreement_acceptances = relationship("AgreementAcceptance", back_populates="offer_snapshot_rel",
+                                         foreign_keys="AgreementAcceptance.offer_acceptance_id",
+                                         primaryjoin="AgreementAcceptance.offer_acceptance_id == TeacherOfferAcceptance.id",
+                                         viewonly=True)
+
+    __table_args__ = (Index("ix_to_teacher_id", "teacher_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<TeacherOffer id={self.id} status={self.status}>"
+
+
+class TeacherOfferAcceptance(Base):
+    """Records teacher's digital acceptance of an offer with full audit trail."""
+
+    __tablename__ = "teacher_offer_acceptances"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    offer_id = Column(String(36), ForeignKey("teacher_offers.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False)
+    accepted_at = Column(DateTime, default=_now, nullable=False)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    acceptance_event_id = Column(String(100), nullable=True)  # idempotency key
+    status = Column(String(20), default="accepted")
+
+    # Relationships
+    offer = relationship("TeacherOffer", back_populates="acceptances")
+    teacher = relationship("Teacher", back_populates="offer_acceptances")
+    agreement_acceptances = relationship("AgreementAcceptance", back_populates="offer_acceptance")
+
+    __table_args__ = (
+        Index("ix_toa_offer_id", "offer_id"),
+        Index("ix_toa_teacher_id", "teacher_id"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<TeacherOfferAcceptance id={self.id}>"
+
+
+# ===========================================================================
+# Assignment-to-Class (ATC) Contract
+# ===========================================================================
+
+
+class ATC(Base):
+    """Teacher assignment contract — detailed engagement terms."""
+
+    __tablename__ = "atcs"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(String(36), nullable=True)     # denormalised string (not FK) for flexibility
+    offer_id = Column(String(36), ForeignKey("teacher_offers.id", ondelete="SET NULL"), nullable=True)
+    program = Column(String(50), nullable=True)
+    exam = Column(String(50), nullable=True)
+    board = Column(String(50), nullable=True)
+    grade = Column(String(10), nullable=True)
+    subject = Column(String(100), nullable=True)
+    chapters = Column(JSON, nullable=True)
+    concepts = Column(JSON, nullable=True)
+    format = Column(String(50), nullable=True)         # e.g. "Live 1-on-1"
+    sessions = Column(Integer, nullable=True)
+    hours = Column(Float, nullable=True)
+    schedule = Column(JSON, nullable=True)
+    timezone = Column(String(50), default="Asia/Kolkata")
+    start_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
+    teacher_rate = Column(Float, nullable=True)
+    teacher_allocation = Column(Float, nullable=True)
+    m1 = Column(Float, nullable=True)
+    m2 = Column(Float, nullable=True)
+    m3 = Column(Float, nullable=True)
+    deliverables = Column(JSON, nullable=True)
+    special_terms = Column(Text, nullable=True)
+    status = Column(String(30), default="draft")       # draft / active / completed / cancelled
+    created_at = Column(DateTime, default=_now, nullable=False)
+
+    # Relationships
+    teacher = relationship("Teacher", back_populates="atcs")
+    offer = relationship("TeacherOffer", back_populates="atcs")
+
+    __table_args__ = (Index("ix_atcs_teacher_id", "teacher_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<ATC id={self.id} status={self.status}>"
+
+
+# ===========================================================================
+# Legal Documents
+# ===========================================================================
+
+
+class FacultyAgreement(Base):
+    """Versioned faculty / teacher agreement document."""
+
+    __tablename__ = "faculty_agreements"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    version = Column(String(20), nullable=False, unique=True)   # e.g. "1.0"
+    title = Column(String(255), nullable=False)
+    content_hash = Column(String(64), nullable=True)            # SHA-256 of the agreement text
+    effective_date = Column(DateTime, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+
+    # Relationships
+    acceptances = relationship("AgreementAcceptance", back_populates="agreement")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<FacultyAgreement version={self.version}>"
+
+
+class AgreementAcceptance(Base):
+    """Immutable record of a teacher accepting a faculty agreement."""
+
+    __tablename__ = "agreement_acceptances"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False)
+    agreement_id = Column(String(36), ForeignKey("faculty_agreements.id", ondelete="RESTRICT"), nullable=False)
+    atc_id = Column(String(36), ForeignKey("atcs.id", ondelete="SET NULL"), nullable=True)
+    offer_acceptance_id = Column(String(36), ForeignKey("teacher_offer_acceptances.id", ondelete="SET NULL"), nullable=True)
+    legal_name = Column(String(255), nullable=True)
+    acceptance_event_id = Column(String(100), nullable=True, unique=True)  # idempotency key
+    accepted_at = Column(DateTime, default=_now, nullable=False)
+    timezone = Column(String(50), default="Asia/Kolkata")
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    document_hash = Column(String(64), nullable=True)
+    atc_hash = Column(String(64), nullable=True)
+    offer_snapshot = Column(JSON, nullable=True)
+    status = Column(String(20), default="accepted")
+
+    # Relationships
+    teacher = relationship("Teacher", back_populates="agreement_acceptances")
+    agreement = relationship("FacultyAgreement", back_populates="acceptances")
+    offer_acceptance = relationship("TeacherOfferAcceptance", back_populates="agreement_acceptances")
+
+    __table_args__ = (
+        Index("ix_aa_teacher_id", "teacher_id"),
+        Index("ix_aa_agreement_id", "agreement_id"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<AgreementAcceptance id={self.id}>"
+
+
+class RefundPolicy(Base):
+    """Versioned refund policy document shown to students/parents at checkout."""
+
+    __tablename__ = "refund_policies"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    version = Column(String(20), nullable=False, unique=True)
+    title = Column(String(255), nullable=False)
+    content_hash = Column(String(64), nullable=True)
+    effective_date = Column(DateTime, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+
+    # Relationships
+    acceptances = relationship("RefundAcceptance", back_populates="policy")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<RefundPolicy version={self.version}>"
+
+
+class RefundAcceptance(Base):
+    """Immutable record of a user accepting the refund policy at checkout."""
+
+    __tablename__ = "refund_acceptances"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(String(36), nullable=True)          # denormalised for audit
+    order_id = Column(String(100), nullable=True)
+    policy_id = Column(String(36), ForeignKey("refund_policies.id", ondelete="RESTRICT"), nullable=False)
+    accepted_at = Column(DateTime, default=_now, nullable=False)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    policy_hash = Column(String(64), nullable=True)
+    acceptance_event_id = Column(String(100), nullable=True, unique=True)
+    status = Column(String(20), default="accepted")
+
+    # Relationships
+    user_rel = relationship("Student", back_populates="refund_acceptances",
+                            foreign_keys=[student_id],
+                            primaryjoin="RefundAcceptance.student_id == Student.id")
+    policy = relationship("RefundPolicy", back_populates="acceptances")
+    bookings = relationship("Booking", back_populates="refund_acceptance")
+
+    __table_args__ = (Index("ix_ra_user_id", "user_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<RefundAcceptance id={self.id}>"
+
+
+# ===========================================================================
+# Booking & Payments
+# ===========================================================================
+
+
+class Booking(Base):
+    """A confirmed student booking for a learning journey."""
+
+    __tablename__ = "bookings"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    student_id = Column(String(36), ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="SET NULL"), nullable=True)
+    journey_id = Column(String(36), ForeignKey("learning_journeys.id", ondelete="SET NULL"), nullable=True)
+    status = Column(String(30), default="pending")     # pending / confirmed / cancelled / completed
+    total_amount = Column(Float, nullable=True)
+    currency = Column(String(10), default="INR")
+    payment_status = Column(String(20), default="pending")  # pending / paid / refunded
+    refund_acceptance_id = Column(String(36), ForeignKey("refund_acceptances.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=_now, nullable=False)
+
+    # Relationships
+    student = relationship("Student", back_populates="bookings")
+    teacher = relationship("Teacher", back_populates="bookings")
+    journey = relationship("LearningJourney", back_populates="bookings")
+    payments = relationship("Payment", back_populates="booking")
+    escrow = relationship("Escrow", back_populates="booking", uselist=False)
+    refund_acceptance = relationship("RefundAcceptance", back_populates="bookings")
+
+    __table_args__ = (
+        Index("ix_bookings_student_id", "student_id"),
+        Index("ix_bookings_teacher_id", "teacher_id"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Booking id={self.id} status={self.status}>"
+
+
+class Payment(Base):
+    """Payment attempt record (one booking may have multiple attempts)."""
+
+    __tablename__ = "payments"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    booking_id = Column(String(36), ForeignKey("bookings.id", ondelete="CASCADE"), nullable=False)
+    provider = Column(String(50), nullable=True)           # e.g. "razorpay"
+    provider_order_id = Column(String(255), nullable=True)
+    provider_payment_id = Column(String(255), nullable=True)
+    amount = Column(Float, nullable=True)
+    currency = Column(String(10), default="INR")
+    status = Column(String(20), default="pending")         # pending / success / failed / refunded
+    payment_method = Column(String(50), nullable=True)     # upi / card / netbanking
+    created_at = Column(DateTime, default=_now, nullable=False)
+    verified_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    booking = relationship("Booking", back_populates="payments")
+
+    __table_args__ = (Index("ix_payments_booking_id", "booking_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Payment id={self.id} status={self.status}>"
+
+
+class Escrow(Base):
+    """Three-milestone escrow record per booking."""
+
+    __tablename__ = "escrows"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    booking_id = Column(String(36), ForeignKey("bookings.id", ondelete="CASCADE"), unique=True, nullable=False)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="SET NULL"), nullable=True)
+    total_amount = Column(Float, nullable=True)
+    m1_amount = Column(Float, nullable=True)
+    m1_status = Column(String(20), default="pending")      # pending / released / cancelled
+    m1_released_at = Column(DateTime, nullable=True)
+    m2_amount = Column(Float, nullable=True)
+    m2_status = Column(String(20), default="pending")
+    m2_released_at = Column(DateTime, nullable=True)
+    m3_amount = Column(Float, nullable=True)
+    m3_status = Column(String(20), default="pending")
+    m3_released_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    booking = relationship("Booking", back_populates="escrow")
+    teacher = relationship("Teacher", back_populates="escrows")
+    wallet_transactions = relationship("WalletTransaction", back_populates="escrow")
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Escrow id={self.id} total={self.total_amount}>"
+
+
+class WalletTransaction(Base):
+    """Teacher wallet credit/debit events linked to escrow milestones."""
+
+    __tablename__ = "wallet_transactions"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="CASCADE"), nullable=False)
+    escrow_id = Column(String(36), ForeignKey("escrows.id", ondelete="SET NULL"), nullable=True)
+    amount = Column(Float, nullable=False)
+    type = Column(String(10), nullable=False)              # credit / debit
+    milestone = Column(String(5), nullable=True)           # m1 / m2 / m3
+    status = Column(String(20), default="pending")
+    transaction_id = Column(String(100), nullable=True)
+    created_at = Column(DateTime, default=_now, nullable=False)
+
+    # Relationships
+    teacher = relationship("Teacher", back_populates="wallet_transactions")
+    escrow = relationship("Escrow", back_populates="wallet_transactions")
+
+    __table_args__ = (Index("ix_wt_teacher_id", "teacher_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<WalletTransaction id={self.id} type={self.type} amount={self.amount}>"
+
+
+# ===========================================================================
+# Classes & Attendance
+# ===========================================================================
+
+
+class Class(Base):
+    """A single scheduled teaching session within a learning journey."""
+
+    __tablename__ = "classes"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    journey_id = Column(String(36), ForeignKey("learning_journeys.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="SET NULL"), nullable=True)
+    student_id = Column(String(36), ForeignKey("students.id", ondelete="SET NULL"), nullable=True)
+    scheduled_at = Column(DateTime, nullable=True)
+    status = Column(String(20), default="scheduled")       # scheduled / completed / cancelled
+    chapter = Column(String(255), nullable=True)
+    concepts = Column(JSON, nullable=True)
+    duration_minutes = Column(Integer, default=60)
+    notes = Column(Text, nullable=True)
+
+    # Relationships
+    journey = relationship("LearningJourney", back_populates="classes")
+    teacher = relationship("Teacher", back_populates="classes")
+    student = relationship("Student", foreign_keys=[student_id])
+    attendances = relationship("Attendance", back_populates="class_session")
+    worksheets = relationship("Worksheet", back_populates="class_session")
+
+    __table_args__ = (
+        Index("ix_classes_journey_id", "journey_id"),
+        Index("ix_classes_teacher_id", "teacher_id"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Class id={self.id} status={self.status}>"
+
+
+class Attendance(Base):
+    """Attendance record for a student in a class."""
+
+    __tablename__ = "attendances"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    class_id = Column(String(36), ForeignKey("classes.id", ondelete="CASCADE"), nullable=False)
+    student_id = Column(String(36), ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    status = Column(String(10), default="present")         # present / absent / late
+
+    # Relationships
+    class_session = relationship("Class", back_populates="attendances")
+    student = relationship("Student", back_populates="attendances")
+
+    __table_args__ = (
+        UniqueConstraint("class_id", "student_id", name="uq_attendance_class_student"),
+        Index("ix_attendance_class_id", "class_id"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Attendance class_id={self.class_id} status={self.status}>"
+
+
+# ===========================================================================
+# Content: Worksheets & Assessments
+# ===========================================================================
+
+
+class Worksheet(Base):
+    """AI-generated worksheet associated with a class / journey."""
+
+    __tablename__ = "worksheets"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    class_id = Column(String(36), ForeignKey("classes.id", ondelete="SET NULL"), nullable=True)
+    journey_id = Column(String(36), ForeignKey("learning_journeys.id", ondelete="CASCADE"), nullable=False)
+    subject_id = Column(String(36), ForeignKey("subjects.id", ondelete="SET NULL"), nullable=True)
+    chapter = Column(String(255), nullable=True)
+    concepts = Column(JSON, nullable=True)
+    questions = Column(JSON, nullable=True)
+    answer_key = Column(JSON, nullable=True)
+    difficulty_mix = Column(JSON, nullable=True)           # {"easy": 40, "medium": 40, "hard": 20}
+    # ai_generated / ai_checked / teacher_review / approved / released / rejected
+    status = Column(String(30), default="ai_generated")
+    ai_quality_flags = Column(JSON, nullable=True)
+    generated_at = Column(DateTime, default=_now)
+    reviewed_at = Column(DateTime, nullable=True)
+    released_at = Column(DateTime, nullable=True)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="SET NULL"), nullable=True)
+
+    # Relationships
+    class_session = relationship("Class", back_populates="worksheets")
+    journey = relationship("LearningJourney", back_populates="worksheets")
+    subject = relationship("Subject", back_populates="worksheets")
+    teacher = relationship("Teacher", back_populates="worksheets")
+    submissions = relationship("Submission", back_populates="worksheet")
+
+    __table_args__ = (Index("ix_worksheets_journey_id", "journey_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Worksheet id={self.id} status={self.status}>"
+
+
+class Assessment(Base):
+    """Formal assessment (test/exam) for a learning journey."""
+
+    __tablename__ = "assessments"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    journey_id = Column(String(36), ForeignKey("learning_journeys.id", ondelete="CASCADE"), nullable=False)
+    subject_id = Column(String(36), ForeignKey("subjects.id", ondelete="SET NULL"), nullable=True)
+    chapter = Column(String(255), nullable=True)
+    concepts = Column(JSON, nullable=True)
+    questions = Column(JSON, nullable=True)
+    answer_key = Column(JSON, nullable=True)
+    paper_type = Column(String(50), nullable=True)         # unit_test / mock / final
+    # ai_generated / ai_checked / teacher_review / approved / released
+    status = Column(String(30), default="ai_generated")
+    generated_at = Column(DateTime, default=_now)
+    released_at = Column(DateTime, nullable=True)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="SET NULL"), nullable=True)
+
+    # Relationships
+    journey = relationship("LearningJourney", back_populates="assessments")
+    subject = relationship("Subject", back_populates="assessments")
+    teacher = relationship("Teacher", back_populates="assessments")
+    submissions = relationship("Submission", back_populates="assessment")
+
+    __table_args__ = (Index("ix_assessments_journey_id", "journey_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Assessment id={self.id} status={self.status}>"
+
+
+class QuestionBankItem(Base):
+    """Reusable question items in the central question bank."""
+
+    __tablename__ = "question_bank_items"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    board = Column(String(50), nullable=True)
+    grade = Column(String(10), nullable=True)
+    exam = Column(String(50), nullable=True)
+    subject = Column(String(100), nullable=True)
+    chapter = Column(String(255), nullable=True)
+    concept = Column(String(255), nullable=True)
+    question_text = Column(Text, nullable=False)
+    options = Column(JSON, nullable=True)               # list for MCQ
+    correct_answer = Column(Text, nullable=True)
+    explanation = Column(Text, nullable=True)
+    question_type = Column(String(20), nullable=True)  # mcq / numerical / short / long / assertion
+    difficulty = Column(String(10), nullable=True)     # easy / medium / hard
+    ai_confidence = Column(Float, nullable=True)
+    teacher_status = Column(String(20), default="pending")  # pending / approved / rejected
+    usage_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=_now, nullable=False)
+
+    __table_args__ = (
+        Index("ix_qbi_subject", "subject"),
+        Index("ix_qbi_chapter", "chapter"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<QuestionBankItem id={self.id} type={self.question_type}>"
+
+
+# ===========================================================================
+# Submissions
+# ===========================================================================
+
+
+class Submission(Base):
+    """Student submission for a worksheet or assessment."""
+
+    __tablename__ = "submissions"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    student_id = Column(String(36), ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
+    worksheet_id = Column(String(36), ForeignKey("worksheets.id", ondelete="SET NULL"), nullable=True)
+    assessment_id = Column(String(36), ForeignKey("assessments.id", ondelete="SET NULL"), nullable=True)
+    submission_type = Column(String(20), nullable=True)    # worksheet / assessment
+    answers = Column(JSON, nullable=True)
+    file_path = Column(String(500), nullable=True)
+    submitted_at = Column(DateTime, default=_now, nullable=False)
+    # submitted / ai_evaluated / teacher_reviewed / completed
+    status = Column(String(30), default="submitted")
+    score = Column(Float, nullable=True)
+    ai_feedback = Column(JSON, nullable=True)
+    teacher_feedback = Column(Text, nullable=True)
+    ai_suggested_result = Column(String(50), nullable=True)
+
+    # Relationships
+    student = relationship("Student", back_populates="submissions")
+    worksheet = relationship("Worksheet", back_populates="submissions")
+    assessment = relationship("Assessment", back_populates="submissions")
+
+    __table_args__ = (
+        Index("ix_submissions_student_id", "student_id"),
+        Index("ix_submissions_worksheet_id", "worksheet_id"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Submission id={self.id} status={self.status}>"
+
+
+# ===========================================================================
+# Notifications & Audit
+# ===========================================================================
+
+
+class Notification(Base):
+    """In-app notification for any user."""
+
+    __tablename__ = "notifications"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(255), nullable=False)
+    body = Column(Text, nullable=True)
+    type = Column(String(50), nullable=True)            # info / warning / success / alert
+    read = Column(Boolean, default=False, nullable=False)
+    entity_id = Column(String(36), nullable=True)       # related entity (e.g. journey id)
+    entity_type = Column(String(50), nullable=True)     # e.g. "journey", "class", "worksheet"
+    created_at = Column(DateTime, default=_now, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="notifications")
+
+    __table_args__ = (
+        Index("ix_notifications_user_id", "user_id"),
+        Index("ix_notifications_read", "read"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Notification id={self.id} user_id={self.user_id} read={self.read}>"
+
+
+class AuditLog(Base):
+    """Immutable audit trail for all significant system events."""
+
+    __tablename__ = "audit_logs"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    event_id = Column(String(100), nullable=True, unique=True)   # idempotency key
+    actor_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    actor_role = Column(String(20), nullable=True)
+    entity_type = Column(String(50), nullable=True)
+    entity_id = Column(String(36), nullable=True)
+    action = Column(String(100), nullable=False)
+    timestamp = Column(DateTime, default=_now, nullable=False)
+    status = Column(String(20), default="success")
+    metadata = Column(JSON, nullable=True)
+
+    # Relationships
+    actor = relationship("User", back_populates="audit_logs", foreign_keys=[actor_id])
+
+    __table_args__ = (
+        Index("ix_audit_actor_id", "actor_id"),
+        Index("ix_audit_entity", "entity_type", "entity_id"),
+        Index("ix_audit_timestamp", "timestamp"),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<AuditLog id={self.id} action={self.action}>"
+
+
+# ===========================================================================
+# PTM (Parent-Teacher Meeting)
+# ===========================================================================
+
+
+class PTM(Base):
+    """Scheduled parent–teacher meeting within a learning journey."""
+
+    __tablename__ = "ptms"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    journey_id = Column(String(36), ForeignKey("learning_journeys.id", ondelete="CASCADE"), nullable=False)
+    teacher_id = Column(String(36), ForeignKey("teachers.id", ondelete="SET NULL"), nullable=True)
+    parent_id = Column(String(36), ForeignKey("parents.id", ondelete="SET NULL"), nullable=True)
+    scheduled_at = Column(DateTime, nullable=True)
+    status = Column(String(20), default="scheduled")    # scheduled / completed / cancelled
+    notes = Column(Text, nullable=True)
+    summary = Column(Text, nullable=True)
+    acknowledged_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    journey = relationship("LearningJourney", back_populates="ptms")
+    teacher = relationship("Teacher", back_populates="ptms")
+    parent = relationship("Parent", back_populates="ptm_sessions", foreign_keys=[parent_id])
+
+    __table_args__ = (Index("ix_ptms_journey_id", "journey_id"),)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<PTM id={self.id} status={self.status}>"

@@ -1,0 +1,799 @@
+/* ==========================================================================
+   SIKO DESIGN SYSTEM - REUSABLE UI COMPONENTS
+   Version A: Clean White Educational Platform (Coursera / Khan Academy Feel)
+   Consistent, accessible, modern, academic-grade components
+   ========================================================================== */
+
+/* 1. BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0.65rem 1.25rem;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-sm); /* 8px */
+  transition: all var(--transition-fast);
+  line-height: 1.35;
+  white-space: normal;
+  text-align: center;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  box-sizing: border-box;
+  user-select: none;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: var(--siko-blue-600); /* #F47B20 */
+  color: #FFFFFF;
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-sm);
+  border: none;
+  box-shadow: 0 1px 3px rgba(244, 123, 32, 0.25);
+}
+.btn-primary:hover {
+  background-color: var(--siko-blue-700); /* #D4620D */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(244, 123, 32, 0.35);
+  color: #FFFFFF;
+}
+
+.btn-secondary {
+  background-color: var(--siko-blue-100); /* #FFF0E5 */
+  color: var(--siko-blue-700); /* #D4620D */
+  border: 1px solid #FED7AA;
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-sm);
+}
+.btn-secondary:hover {
+  background-color: #FFEDD5;
+  color: var(--siko-blue-800);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--siko-blue-600);
+  border: 1.5px solid var(--siko-blue-600);
+  border-radius: var(--radius-sm);
+}
+.btn-outline:hover {
+  background-color: var(--siko-blue-100);
+  color: var(--siko-blue-700);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+}
+.btn-ghost:hover {
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-primary);
+}
+
+.btn-danger {
+  background-color: var(--color-danger);
+  color: #FFFFFF;
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-semibold);
+}
+.btn-danger:hover {
+  background-color: #B91C1C;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.85rem;
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+}
+
+.btn-lg {
+  padding: 0.85rem 1.85rem;
+  font-size: var(--text-base);
+  border-radius: var(--radius-sm);
+}
+
+.btn-full {
+  width: 100%;
+}
+
+.btn-icon {
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+}
+.btn-icon:hover {
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-primary);
+}
+
+/* 2. CARDS */
+:where(.card) {
+  background-color: #FFFFFF;
+  border: 1px solid var(--color-border-card); /* #E8EDF5 */
+  border-radius: var(--radius-lg); /* 14px */
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  position: relative;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.09);
+  border-color: #FDBA74;
+}
+
+.card-subtle {
+  background-color: #FDF5EF;
+  border-color: var(--color-border-card);
+}
+
+.card-dark {
+  background-color: var(--classroom-surface);
+  border-color: var(--classroom-border);
+  color: var(--classroom-text);
+}
+
+/* 3. TEACHER CARD */
+.teacher-card {
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border-card);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+  transition: all var(--transition-fast);
+  height: 100%;
+}
+
+.teacher-card:hover {
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  border-color: var(--siko-blue-600);
+  transform: translateY(-2px);
+}
+
+.teacher-card-header {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  margin-bottom: var(--space-4);
+}
+
+.teacher-avatar-wrap {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+}
+
+.teacher-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 2px solid #FFFFFF;
+  box-shadow: var(--shadow-xs);
+}
+
+.verified-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: var(--siko-blue-600);
+  color: #FFFFFF;
+  border-radius: var(--radius-full);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #FFFFFF;
+  font-size: 11px;
+}
+
+.teacher-meta-title {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.teacher-specialty {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.teacher-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-3) 0;
+}
+
+.teacher-quote {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-style: italic;
+  background: #FDF5EF;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+  border-left: 3px solid var(--siko-blue-600);
+}
+
+.teacher-match-badge {
+  font-size: var(--text-xs);
+  color: var(--color-success);
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: var(--font-weight-medium);
+}
+
+.teacher-slots {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
+
+.teacher-card-footer {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.teacher-price {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-text-primary);
+}
+.teacher-price span {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-muted);
+}
+
+/* 4. TEACHER TIER BADGES */
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-full);
+  letter-spacing: 0.03em;
+}
+
+.tier-badge-master {
+  background: var(--tier-master-bg);
+  color: var(--tier-master-color);
+  border: 1px solid var(--tier-master-border);
+}
+
+.tier-badge-expert {
+  background: var(--tier-expert-bg);
+  color: var(--tier-expert-color);
+  border: 1px solid var(--tier-expert-border);
+}
+
+.tier-badge-senior {
+  background: var(--tier-senior-bg);
+  color: var(--tier-senior-color);
+  border: 1px solid var(--tier-senior-border);
+}
+
+.tier-badge-pro {
+  background: var(--tier-pro-bg);
+  color: var(--tier-pro-color);
+  border: 1px solid var(--tier-pro-border);
+}
+
+/* 5. PROGRESS BARS */
+.progress-bar-wrap {
+  width: 100%;
+  background: var(--siko-blue-100);
+  border-radius: var(--radius-full);
+  height: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--siko-blue-600);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+}
+
+.progress-bar-success {
+  background: var(--color-success);
+}
+
+.progress-bar-warning {
+  background: var(--color-warning);
+}
+
+.progress-bar-amber {
+  background: linear-gradient(90deg, #F59E0B, #D97706);
+}
+
+/* 6. BATCH CARD */
+.batch-card {
+  background: #FFFFFF;
+  border: 1px solid var(--color-border-card);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+  transition: all var(--transition-fast);
+}
+
+.batch-card:hover {
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  border-color: var(--siko-blue-600);
+}
+
+.batch-capacity {
+  margin: var(--space-3) 0;
+}
+
+.batch-capacity-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: 4px;
+}
+
+/* 7. WALLET & MILESTONES */
+.wallet-card {
+  background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+  color: #FFFFFF;
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+  border: 1px solid var(--color-border);
+}
+
+.wallet-balances-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.wallet-balance-box {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  backdrop-filter: blur(8px);
+}
+
+.wallet-balance-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94A3B8;
+  margin-bottom: var(--space-1);
+}
+
+.wallet-balance-value {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-extrabold);
+  color: #FFFFFF;
+}
+
+/* Milestone Timeline */
+.milestone-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  position: relative;
+  padding-left: var(--space-6);
+}
+
+.milestone-timeline::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.milestone-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.milestone-node {
+  position: absolute;
+  left: -24px;
+  top: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  z-index: 2;
+  border: 2px solid #FFFFFF;
+}
+
+.milestone-released {
+  background: var(--color-success);
+  color: #FFFFFF;
+}
+
+.milestone-pending {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* 8. STEPPER */
+.stepper {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  margin-bottom: var(--space-4);
+  box-sizing: border-box;
+}
+
+.stepper-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  z-index: 2;
+  flex: 1 1 88px;
+  min-width: 78px;
+  max-width: 100%;
+  padding: 0.35rem 0.25rem;
+  border-radius: var(--radius-md);
+  text-align: center;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.stepper-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: #FFFFFF;
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+  transition: all var(--transition-fast);
+}
+
+.stepper-item.active .stepper-circle {
+  background: var(--siko-blue-600);
+  border-color: var(--siko-blue-600);
+  color: #FFFFFF;
+  box-shadow: 0 0 0 4px var(--siko-blue-100);
+}
+
+.stepper-item.completed .stepper-circle {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #FFFFFF;
+}
+
+.stepper-title {
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+}
+
+.stepper-item.active .stepper-title {
+  color: var(--siko-blue-600);
+  font-weight: var(--font-weight-bold);
+}
+
+/* 9. TABS (Clean Pill Tabs on Grey Background Track) */
+.tabs {
+  display: flex;
+  background: #F3F4F6;
+  border-radius: 9999px;
+  padding: 4px;
+  gap: 4px;
+  border-bottom: none;
+  margin-bottom: var(--space-6);
+  overflow-x: auto;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.tab-btn {
+  padding: 0.45rem 1rem;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: #4B5563;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tab-btn:hover {
+  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.tab-btn.active {
+  color: #FFFFFF;
+  background: var(--siko-blue-600);
+  box-shadow: 0 1px 3px rgba(67, 97, 238, 0.3);
+  font-weight: 700;
+}
+
+/* Secondary underline tabs variant */
+.tabs-underline {
+  background: transparent;
+  border-radius: 0;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0;
+  gap: var(--space-6);
+}
+
+.tabs-underline .tab-btn {
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.tabs-underline .tab-btn.active {
+  color: var(--siko-blue-600);
+  border-bottom-color: var(--siko-blue-600);
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 10. MODAL & DRAWER */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-normal);
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-container {
+  background: #FFFFFF;
+  border-radius: var(--radius-xl);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-border);
+  transform: translateY(12px) scale(0.98);
+  transition: transform var(--transition-normal);
+  padding: var(--space-6);
+}
+
+.modal-overlay.open .modal-container {
+  transform: translateY(0) scale(1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* 11. TOAST NOTIFICATIONS */
+.toast-container {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 380px;
+}
+
+.toast {
+  background: #FFFFFF;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--siko-blue-600);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  animation: fadeIn var(--transition-fast) ease-out;
+}
+
+.toast-success { border-left-color: var(--color-success); }
+.toast-warning { border-left-color: var(--color-warning); }
+.toast-danger { border-left-color: var(--color-danger); }
+
+/* 12. DATA TABLES */
+.data-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border-card);
+  border-radius: var(--radius-lg);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--text-sm);
+}
+
+.data-table th {
+  background: #F9FAFB;
+  padding: var(--space-3) var(--space-4);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.data-table td {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text-primary);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr:hover td {
+  background: var(--color-bg-app);
+}
+
+/* 13. EMPTY & ERROR STATES */
+.empty-state {
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-xl);
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: var(--siko-blue-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--siko-blue-600);
+  margin-bottom: var(--space-4);
+}
+
+.empty-state-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-1);
+}
+
+.empty-state-desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  max-width: 360px;
+  margin-bottom: var(--space-6);
+}
+
+/* 14. SKELETON LOADERS */
+.skeleton {
+  background: linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* 15. NAVIGATION SIDEBAR SPECIFICS */
+.nav-sidebar, .sidebar {
+  background: #FFFFFF !important;
+  border-right: 1px solid var(--color-border) !important;
+}
+
+.sidebar-nav-item, .nav-item, .sidebar-link {
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.sidebar-nav-item:hover, .nav-item:hover, .sidebar-link:hover {
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-primary);
+}
+
+.sidebar-nav-item.active, .nav-item.active, .sidebar-link.active {
+  background-color: var(--siko-blue-100);
+  color: var(--siko-blue-600);
+  font-weight: var(--font-weight-bold);
+  border-left: 3px solid var(--siko-blue-600);
+}
+
+
+/* 16. THEME A UTILITIES & ACCENTS */
+.badge-purple {
+  background-color: var(--siko-purple-100);
+  color: var(--siko-purple-600);
+  border: 1px solid #DDD6FE;
+}
+.badge-blue {
+  background-color: var(--siko-blue-100);
+  color: var(--siko-blue-600);
+  border: 1px solid #FED7AA;
+}
+.badge-amber {
+  background-color: var(--siko-amber-100);
+  color: var(--siko-amber-600);
+  border: 1px solid var(--siko-amber-400);
+}
+.badge-emerald {
+  background-color: var(--siko-teal-50);
+  color: var(--siko-teal-600);
+  border: 1px solid var(--siko-teal-100);
+}
